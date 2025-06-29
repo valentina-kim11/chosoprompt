@@ -25,6 +25,12 @@ export function ImageUploadZone({
     (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
       if (file) {
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('Hình ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 5MB.');
+          return;
+        }
+        
         onImageSelect(file);
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -80,10 +86,7 @@ export function ImageUploadZone({
                 {isDragActive ? 'Thả hình ảnh vào đây' : 'Tải lên hình ảnh'}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Kéo thả hoặc nhấp để chọn • JPG, PNG, GIF, WebP
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Kích thước tối đa: 10MB
+                Kéo thả hoặc nhấp để chọn • JPG, PNG, GIF, WebP • Tối đa 5MB
               </p>
             </div>
           </div>
