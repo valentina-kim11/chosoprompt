@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { compressImage } from '@/utils/imageUtils';
 
 interface ImageUploadZoneProps {
   onImageSelect: (file: File) => void;
@@ -23,20 +24,22 @@ export function ImageUploadZone({
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      if (file) {
-        // Check file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          alert('Hình ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 5MB.');
-          return;
-        }
-        
-        onImageSelect(file);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setPreview(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
+      const originalFile = acceptedFiles[0];
+      if (originalFile) {
+        // Compress image before selecting
+        compressImage(originalFile)
+          .then((compressedFile) => {
+            onImageSelect(compressedFile);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              setPreview(e.target?.result as string);
+            };
+            reader.readAsDataURL(compressedFile);
+          })
+          .catch((error) => {
+            console.error('Error compressing image:', error);
+            alert('Không thể xử lý ảnh. Vui lòng thử ảnh khác.');
+          });
       }
     },
     [onImageSelect]
@@ -45,7 +48,7 @@ export function ImageUploadZone({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.bmp'],
+      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
     },
     maxFiles: 1,
     disabled,
@@ -86,7 +89,10 @@ export function ImageUploadZone({
                 {isDragActive ? 'Thả hình ảnh vào đây' : 'Tải lên hình ảnh'}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Kéo thả hoặc nhấp để chọn • JPG, PNG, GIF, WebP • Tối đa 5MB
+                Kéo thả hoặc nhấp để chọn • JPG, PNG, GIF, WebP • Tự động nén
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Ảnh sẽ được tự động nén để tối ưu tốc độ xử lý
               </p>
             </div>
           </div>

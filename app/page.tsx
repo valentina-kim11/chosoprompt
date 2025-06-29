@@ -38,11 +38,12 @@ export default function Home() {
       return;
     }
 
-    // Check file size again before processing
-    if (selectedImage.size > 5 * 1024 * 1024) {
-      toast.error('Hình ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 5MB.');
+    // Check file size again before processing (after compression should be <1MB)
+    if (selectedImage.size > 2 * 1024 * 1024) {
+      toast.error('Ảnh vẫn quá lớn sau khi nén. Vui lòng chọn ảnh khác.');
       return;
     }
+    
     setIsGenerating(true);
     
     try {
@@ -60,11 +61,13 @@ export default function Home() {
       reader.readAsDataURL(selectedImage);
       const base64Image = await base64Promise;
 
-      // Double check base64 size
-      if (base64Image.length > 8 * 1024 * 1024) { // ~6MB after base64 encoding
-        toast.error('Hình ảnh sau khi xử lý vẫn quá lớn. Vui lòng chọn ảnh nhỏ hơn.');
+      // Double check base64 size (should be < 1.5MB after base64 encoding)
+      const estimatedSize = (base64Image.length * 3) / 4; // Estimate original size from base64
+      if (estimatedSize > 1.5 * 1024 * 1024) {
+        toast.error('Ảnh vẫn quá lớn. Vui lòng thử ảnh có độ phân giải thấp hơn.');
         return;
       }
+      
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
